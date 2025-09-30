@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>كتالوج سوق تعز الرسمية - تصميم متقدم</title>
+    <!-- تحميل Tailwind CSS لأجل السرعة والتصميم الأساسي الجذاب -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+    <style>
+        /* ======================================================= */
+        /* التنسيقات المعقدة والمتقدمة (Custom CSS) - محظورة الألوان الداكنة */
+        /* ======================================================= */
+        :root {
+            --bg-color: #0d0d0d; /* خلفية داكنة جداً */
+            --card-bg: #1a1a1a; /* خلفية البطاقة أغمق */
+            --text-color: #f0f0f0;
+            --accent-color: #4CAF50; /* أخضر الواتساب المميز */
+            --secondary-accent: #00bcd4; /* لون ثانوي مائي */
+            --shadow-color: rgba(0, 0, 0, 0.8);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding: 2rem 0;
+            overflow-x: hidden;
+        }
+
+        /* شريط التنقل العلوي الشفاف */
+        .header-sticky {
+            background-color: rgba(13, 13, 13, 0.95);
+            backdrop-filter: blur(8px); /* تأثير ضبابي احترافي */
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        /* تأثير التمرير ثلاثي الأبعاد */
+        .catalog-grid {
+            perspective: 1500px;
+            display: grid;
+            /* تجاوبي: عمود واحد للجوال، عمودين للأجهزة اللوحية، 3 أو أكثر للديسكتوب */
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem; /* تقليل الفجوة على الجوال */
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem; /* تقليل الحشو على الجوال */
+        }
+
+        /* حاوية الإمالة والحركة الانتقالية */
+        .tilt-container {
+            transform-style: preserve-3d;
+            transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.4s ease-out, transform 0.4s ease-out; 
+            will-change: transform, opacity;
+            border-radius: 1rem;
+            box-shadow: 0 5px 15px var(--shadow-color); /* تقليل الظل على الجوال */
+            cursor: pointer;
+        }
+
+        /* حالة الإخفاء (للتصفية) */
+        .tilt-container.hidden-product {
+            opacity: 0;
+            transform: scale(0.8) translateY(20px);
+            max-height: 0;
+            overflow: hidden;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        /* بطاقة المنتج الفعلية */
+        .product-card {
+            background-color: var(--card-bg);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid transparent;
+            transition: border-color 0.5s ease-out;
+            height: 100%;
+        }
+
+        /* تأثير التوهج عند التمرير */
+        .tilt-container:hover .product-card {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 30px rgba(76, 175, 80, 0.5); /* توهج أخضر */
+        }
+
+        /* عنصر لتأثير الإضاءة الوهمية */
+        .glare {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            transform: translateZ(100px);
+            pointer-events: none;
+        }
+
+        .tilt-container:hover .glare {
+            opacity: 1;
+        }
+
+        /* محتوى البطاقة الداخلي للحفاظ على تأثير العمق */
+        .card-content > * {
+            transform: translateZ(20px);
+            transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        /* ======================================================= */
+        /* تحسينات الصور: الظل والانعكاس (Reflection) */
+        /* ======================================================= */
+        .product-image-container {
+            position: relative;
+            padding-bottom: 2rem; /* مساحة للانعكاس */
+            margin-bottom: 1rem;
+        }
+
+        .product-image {
+            height: 200px; /* ارتفاع أقل على الجوال */
+            width: 100%;
+            object-fit: cover;
+            border-radius: 0.75rem;
+            transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            /* ظل ثلاثي الأبعاد قوي */
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.7); 
+            display: block;
+        }
+
+        /* تأثير الانعكاس/الظل الأرضي */
+        .reflection-shadow {
+            position: absolute;
+            bottom: 0.5rem; /* وضع الظل تحت الصورة مباشرة */
+            left: 15%;
+            width: 70%;
+            height: 1rem;
+            /* تدرج شعاعي يعطي إحساساً بالظل تحت المنتج */
+            background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.6) 0%, transparent 70%);
+            filter: blur(6px);
+            /* إمالة خفيفة لإعطاء منظور العمق */
+            transform: perspective(100px) rotateX(25deg);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        @media (min-width: 768px) {
+            .product-image {
+                height: 250px;
+            }
+        }
+        /* ======================================================= */
+
+
+        /* زر الإجراء الافتراضي */
+        .detail-button {
+            background-image: linear-gradient(45deg, var(--secondary-accent), #00e5ff);
+            color: var(--bg-color);
+            font-weight: 700;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 5px 15px rgba(0, 188, 212, 0.4);
+            transition: all 0.3s ease;
+            transform: translateZ(30px);
+        }
+        
+        .detail-button:hover {
+            transform: translateZ(40px) scale(1.05);
+        }
+        
+        /* تصميم أزرار التصفية */
+        .filter-button {
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: #ccc;
+            background-color: #2a2a2a;
+        }
+        
+        .filter-button.active {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            border-color: var(--accent-color);
+            font-weight: bold;
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+        
+        /* شريط الواتساب السفلي - تصميم ملفت */
+        .whatsapp-cta {
+            background-color: var(--accent-color);
+            color: #0d0d0d;
+            padding: 2.5rem 1rem;
+            border-radius: 1.5rem 1.5rem 0 0;
+            box-shadow: 0 -10px 30px rgba(76, 175, 80, 0.6);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 -10px 30px rgba(76, 175, 80, 0.6); }
+            50% { transform: scale(1.01); box-shadow: 0 -5px 40px rgba(76, 175, 80, 0.8); }
+            100% { transform: scale(1); box-shadow: 0 -10px 30px rgba(76, 175, 80, 0.6); }
+        }
+
+        .whatsapp-btn {
+            background-color: #075E54;
+            color: white;
+            padding: 1rem 2rem;
+            font-size: 1.25rem;
+            font-weight: bold;
+            border-radius: 9999px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            transition: transform 0.2s ease, background-color 0.2s ease;
+        }
+
+        .whatsapp-btn:hover {
+            background-color: #128C7E;
+            transform: translateY(-3px) scale(1.05);
+        }
+
+        /* تصميم النافذة المنبثقة (Modal) */
+        .modal {
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 50;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            border-radius: 1rem;
+            max-width: 900px;
+            width: 95%; /* أوسع على الجوال */
+            max-height: 95vh; /* أطول على الجوال */
+            overflow-y: auto;
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .modal.open .modal-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+        
+        /* التجاوبية للنافذة المنبثقة */
+        .modal-body-grid {
+             display: grid;
+             grid-template-columns: 1fr;
+             gap: 1.5rem;
+        }
+        @media (min-width: 768px) {
+            .modal-content {
+                width: 90%;
+            }
+            .modal-body-grid {
+                grid-template-columns: 2fr 3fr; /* توزيع أفضل للصور والنص على الشاشات الكبيرة */
+                gap: 2rem;
+            }
+        }
+
+
+        /* إخفاء تأثير الإمالة على الجوالات لتحسين الأداء وتجنب تعارض اللمس */
+        @media (max-width: 768px) {
+            .tilt-container {
+                transition: transform 0.4s ease-out, opacity 0.4s ease-out; 
+                box-shadow: 0 5px 10px var(--shadow-color);
+            }
+            .tilt-container:hover .product-card {
+                border-color: transparent;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+
+    <!-- شريط التنقل العلوي -->
+    <header class="p-4 md:p-6 sticky top-0 z-10 header-sticky">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center header-content">
+            <h1 class="text-2xl md:text-3xl font-extrabold mb-3 md:mb-0" style="color: var(--accent-color);">سوق تعز الرسمية | الكتالوج</h1>
+            <input type="text" id="searchInput" placeholder="ابحث باسم المنتج أو الفئة..." class="w-full md:max-w-md p-2 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all text-sm" />
+        </div>
+    </header>
+
+    <!-- العنوان الرئيسي -->
+    <main class="container mx-auto mt-6 md:mt-10 p-4">
+        <h2 class="text-4xl md:text-5xl font-black mb-2 text-center">عروض حصرية من سوق تعز</h2>
+        <p class="text-gray-400 text-center mb-6 md:mb-8 max-w-4xl mx-auto text-base md:text-lg">استعرض أحدث تشكيلاتنا. لمعرفة السعر الفعلي والمزيد، انقر على أي منتج.</p>
+        
+        <!-- أزرار التصفية المتقدمة -->
+        <div id="filterButtons" class="flex flex-wrap justify-center gap-2 md:gap-3 mb-8 md:mb-12 p-2">
+            <!-- سيتم إضافة أزرار التصفية هنا بواسطة JavaScript -->
+        </div>
+
+        <!-- شبكة عرض المنتجات -->
+        <section id="productGrid" class="catalog-grid">
+            <!-- سيتم إضافة بطاقات المنتجات هنا بواسطة JavaScript -->
+        </section>
+    </main>
+
+    <!-- شريط الحث على الإجراء للواتساب -->
+    <section class="whatsapp-cta mt-16 md:mt-20">
+        <div class="max-w-5xl mx-auto text-center">
+            <h3 class="text-2xl md:text-3xl font-extrabold mb-4">
+                اكتشف أسعار **التصفية النهائية**! فرص لا تُعوض.
+            </h3>
+            <p class="text-gray-800 mb-6 md:mb-8 font-medium text-sm md:text-base">
+                هذه الأسعار **مستحيل** عرضها هنا! انقر الآن لترى **المفاجآت الحقيقية** في قناة **"سوق تعز الرسمية"** على واتساب:
+            </p>
+            <!-- الرابط المحدث لتوجه المستخدم إلى القناة مباشرة -->
+            <a id="whatsappLink" href="" target="_blank" class="whatsapp-btn inline-flex items-center space-x-2 space-x-reverse">
+                <i class="fab fa-whatsapp text-xl md:text-2xl"></i>
+                <span>انقر للدخول واكتشاف الأسعار الحصرية الآن</span>
+            </a>
+        </div>
+    </section>
+    
+    <!-- زر العودة للأعلى -->
+    <button id="scrollToTopBtn" class="fixed bottom-28 right-5 z-20 p-3 rounded-full bg-gray-700 text-white shadow-lg transition-all duration-300 opacity-0 transform translate-y-4 hover:bg-gray-600">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <!-- النافذة المنبثقة لتفاصيل المنتج (Modal) -->
+    <div id="productModal" class="modal fixed inset-0 flex items-center justify-center p-4 md:p-8 hidden">
+        <div class="modal-content relative shadow-2xl">
+            <!-- زر الإغلاق -->
+            <button id="closeModalBtn" class="absolute top-4 right-4 text-3xl text-white hover:text-red-500 transition-colors z-50">
+                &times;
+            </button>
+            <div id="modalBody" class="p-6 md:p-8 modal-body-grid">
+                <!-- المحتوى سيتم تحميله بواسطة JavaScript -->
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ======================================================= -->
+    <!-- منطق JavaScript المتقدم (Script.js) -->
+    <!-- ======================================================= -->
+    <script>
+        // إعدادات API Key (تُترك فارغة)
+        const apiKey = ""; 
+        const productGrid = document.getElementById('productGrid');
+        const filterButtonsContainer = document.getElementById('filterButtons');
+        const productModal = document.getElementById('productModal');
+        const modalBody = document.getElementById('modalBody');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const whatsappLink = document.getElementById('whatsappLink');
+        
+        // =======================================================
+        // بيانات المنتجات الثمانية والرسالة التسويقية - (تم التحديث باستخدام روابط جوجل درايف المباشرة)
+        // =======================================================
+        
+        // 1. رابط قناة الواتساب المحدث
+        const WHATSAPP_CHANNEL_LINK = "https://whatsapp.com/channel/0029VbBE0952Jl8IMOgOTW1i"; 
+        
+        whatsappLink.href = WHATSAPP_CHANNEL_LINK; // الرابط مباشرة للقناة
+
+        // 2. بيانات المنتجات الثمانية
+        const products = [
+            { 
+                id: 1, 
+                name: "هواتف بأقوى الموصفات", 
+                category: "إلكترونيات", 
+                price: 0, 
+                description: "هواتف 📱 بأقوى الموصفات وبسعر مناسب جداً.", 
+                // رابط جوجل درايف المباشر (Phones.jpg)
+                imageUrl: "https://drive.google.com/uc?export=view&id=1FwuS0KJOxlPf6zZymJgXQ73xVpgKDx0C"
+            },
+            { 
+                id: 2, 
+                name: "أزياء تناسب كل الأذواق", 
+                category: "ملابس وأزياء", 
+                price: 0, 
+                description: "ملابس 👗 أزياء تناسب كل الأذواق.", 
+                // رابط جوجل درايف المباشر (Clothes.jpg)
+                imageUrl: "https://drive.google.com/uc?export=view&id=1NExHjYh4NOJ0anYySy9KFydEBHFP4skW" 
+            },
+            { 
+                id: 3, 
+                name: "العناية الشخصية والجمال", 
+                category: "عطور ومكياج", 
+                price: 0, 
+                description: "عناية شخصية 🧴 لجمالك واهتمامك.", 
+                 // رابط جوجل درايف المباشر (beauty.jpg)
+                imageUrl: "https://drive.google.com/uc?export=view&id=1T8XQkEHuu3mk5gHZT3DC_H1HtvLhNfhN" 
+            },
+            { 
+                id: 4, 
+                name: "أدوات الطبخ اليومية", 
+                category: "منزل ومطبخ", 
+                price: 0, 
+                description: "أدوات طبخ 🍽️ اليومية وبأقل الأسعار.", 
+                // رابط جوجل درايف المباشر (Tools.jpg)
+                imageUrl: "https://drive.google.com/uc?export=view&id=1mcnzmMaCvW8ck9ra3vsMWC_feDZEuP4i" 
+            },
+            { 
+                id: 5, 
+                name: "أجهزة كهربائية منزلية", 
+                category: "إلكترونيات", 
+                price: 0, 
+                description: "أجهزة كهربائية ⚡ تسهل يومك في المنزل.", 
+                // رابط جوجل درايف المباشر (Devices.jpg)
+                imageUrl: "https://drive.google.com/uc?export=view&id=18DJDtuerhjqULgMGg4OSGqV4PXiFcXrh" 
+            },
+            { 
+                id: 6, 
+                name: "زينة وديكور للمنزل", 
+                category: "أثاث وديكور", 
+                price: 0, 
+                description: "زينة وديكور 🕯️ لمسة جمال لبيتك.", 
+                // رابط جوجل درايف المباشر (decoration.jpg)
+                imageUrl: "https://drive.google.com/uc?export=view&id=1gFgTxCWB8Cg2b7B32tSW5XOk82YeiIln" 
+            },
+            { 
+                id: 7, 
+                name: "شنط أنيقة وعملية", 
+                category: "أكسسوارات", 
+                price: 0, 
+                description: "شنط 👜 أنيقة وعملية.", 
+                // رابط جوجل درايف المباشر (Bags.jpg)
+                imageUrl: "https://drive.google.com/uc?export=view&id=1g6Ap1b78mwqOV86WSDTTFSMahG5XRI44" 
+            },
+            { 
+                id: 8, 
+                name: "أدوات رياضية وصحة", 
+                category: "رياضة ولياقة", 
+                price: 0, 
+                description: "أدوات رياضية 🏋️‍♂️ لياقة وصحة أفضل.", 
+                // رابط جوجل درايف المباشر (Sport.jpg)
+                imageUrl: "https://drive.google.com/uc?export=view&id=1WsCAQnw0QXdE5Eavr4SAWKHA3_IqvlAs" 
+            },
+        ];
+        
+        let activeCategory = 'الكل';
+        
+        // =======================================================
+        // دالة إنشاء بطاقة المنتج مع تأثير الإمالة
+        // =======================================================
+        function createProductCard(product) {
+            const tiltContainer = document.createElement('div');
+            // استخدام اسم الفئة لتسهيل التصفية
+            tiltContainer.className = `tilt-container ${product.category.replace(/\s/g, '-')}`; 
+            tiltContainer.setAttribute('data-id', product.id);
+
+            const card = document.createElement('div');
+            card.className = 'product-card flex flex-col h-full';
+            card.setAttribute('tabindex', '0'); 
+
+            card.innerHTML = `
+                <div class="card-content flex flex-col h-full">
+                    <!-- حاوية الصورة مع الانعكاس/الظل الأرضي -->
+                    <div class="product-image-container">
+                        <img src="${product.imageUrl}" alt="${product.name}" class="product-image" onerror="this.onerror=null;this.src='https://placehold.co/400x250/4CAF50/0d0d0d?text=Image+Load+Error'; this.classList.add('p-4');" />
+                        <div class="reflection-shadow"></div>
+                    </div>
+                    
+                    <h3 class="text-xl font-bold mb-2">${product.name}</h3>
+                    <p class="text-sm text-gray-400 mb-2">${product.category}</p>
+                    <p class="text-gray-300 flex-grow mb-4 text-sm">${product.description.substring(0, 70)}...</p>
+                    <div class="mt-auto flex justify-between items-center pt-4">
+                        <span class="text-xl font-extrabold text-red-400">
+                            السعر: في القناة!
+                        </span>
+                        <button class="detail-button" data-product-id="${product.id}">
+                            <i class="fas fa-info-circle ml-2"></i> التفاصيل & السعر
+                        </button>
+                    </div>
+                    <div class="glare"></div>
+                </div>
+            `;
+            
+            tiltContainer.appendChild(card);
+            productGrid.appendChild(tiltContainer);
+            
+            setupTiltEffect(tiltContainer);
+            
+            tiltContainer.querySelector('.detail-button').addEventListener('click', (e) => {
+                e.stopPropagation(); 
+                openModal(product);
+            });
+            tiltContainer.addEventListener('click', () => {
+                openModal(product);
+            });
+            
+            return tiltContainer;
+        }
+        
+        // =======================================================
+        // دالة تطبيق تأثير الإمالة ثلاثية الأبعاد التفاعلية
+        // =======================================================
+        function setupTiltEffect(element) {
+            const card = element.querySelector('.product-card');
+            const glare = element.querySelector('.glare');
+            
+            const MAX_TILT = 8;
+            const MAX_GLARE = 100;
+            const isMobile = window.innerWidth <= 768; 
+
+            const handleMove = (e) => {
+                if (isMobile) return; 
+
+                let clientX, clientY;
+                const isTouch = e.touches && e.touches.length > 0;
+                
+                if (isTouch) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                }
+                
+                const rect = element.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
+                const offsetX = clientX - centerX;
+                const offsetY = clientY - centerY;
+
+                const percentX = offsetX / (rect.width / 2);
+                const percentY = offsetY / (rect.height / 2);
+
+                const rotateY = percentX * MAX_TILT * -1;
+                const rotateX = percentY * MAX_TILT;
+
+                element.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+
+                const glareX = (percentX * MAX_GLARE * -1) + (rect.width / 2);
+                const glareY = (percentY * MAX_GLARE) + (rect.height / 2);
+                
+                glare.style.background = `radial-gradient(circle at ${glareX}px ${glareY}px, rgba(255, 255, 255, 0.2) 0%, transparent 60%)`;
+                
+                const img = element.querySelector('.product-image');
+                if(img) {
+                    // تطبيق حركة الصورة داخل البطاقة لزيادة تأثير العمق
+                    img.style.transform = `translate3d(${rotateY * 0.5}px, ${rotateX * 0.5}px, 0)`; 
+                }
+            };
+            
+            const handleEnter = () => {
+                 if (isMobile) return;
+                element.style.transition = 'transform 0.1s linear'; 
+            }
+
+            const handleLeave = () => {
+                 if (isMobile) return;
+                element.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                element.style.transform = 'none';
+                
+                const img = element.querySelector('.product-image');
+                if(img) {
+                    img.style.transform = 'none';
+                }
+            };
+
+            // ربط الأحداث للماوس فقط في حال عدم التواجد على الجوال
+            if (!isMobile) {
+                element.addEventListener('mouseenter', handleEnter);
+                element.addEventListener('mouseleave', handleLeave);
+                element.addEventListener('mousemove', handleMove);
+            }
+        }
+        
+        // =======================================================
+        // منطق النافذة المنبثقة (Modal Logic)
+        // =======================================================
+        
+        function openModal(product) {
+            const whatsappChannelLink = WHATSAPP_CHANNEL_LINK;
+
+            modalBody.innerHTML = `
+                <div class="col-span-1">
+                    <img src="${product.imageUrl}" alt="${product.name}" class="w-full h-auto object-cover rounded-lg shadow-xl" onerror="this.onerror=null;this.src='https://placehold.co/800x600/4CAF50/0d0d0d?text=Image+Load+Error'; this.classList.add('p-8');" />
+                </div>
+                <div class="col-span-1 p-0 flex flex-col justify-between">
+                    <div>
+                        <span class="text-sm font-semibold mb-2 inline-block px-3 py-1 rounded-full text-gray-900" style="background-color: var(--secondary-accent);">${product.category}</span>
+                        <h2 class="text-3xl md:text-4xl font-extrabold mb-4">${product.name}</h2>
+                        <p class="text-gray-300 mb-6 leading-relaxed text-sm md:text-base">${product.description}</p>
+                        
+                        <div class="mb-6 border-y border-gray-700 py-4">
+                            <p class="text-2xl font-bold text-red-500 mb-2">السعر: مفاجأة مخفية!</p>
+                            <p class="text-sm md:text-lg text-gray-400">
+                                <i class="fas fa-eye-slash ml-1"></i> <span class="font-bold text-white">الأسعار الحقيقية والعروض اللحظية</span> تُنشر حصرياً في القناة. **لا تفوت الفرصة!**
+                            </p>
+                        </div>
+                    </div>
+
+                    <a href="${whatsappChannelLink}" 
+                       target="_blank" class="whatsapp-btn text-center mt-4 w-full inline-flex items-center justify-center space-x-2 space-x-reverse">
+                       <i class="fab fa-whatsapp text-xl"></i>
+                       <span>اكتشف السعر النهائي لهذا المنتج (في القناة)</span>
+                    </a>
+                </div>
+            `;
+            productModal.classList.remove('hidden');
+            productModal.classList.add('open');
+            document.body.style.overflow = 'hidden'; 
+        }
+
+        function closeModal() {
+            productModal.classList.remove('open');
+            setTimeout(() => {
+                productModal.classList.add('hidden');
+            }, 300); 
+            document.body.style.overflow = '';
+        }
+
+        closeModalBtn.addEventListener('click', closeModal);
+        productModal.addEventListener('click', (e) => {
+            if (e.target === productModal) {
+                closeModal();
+            }
+        });
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && productModal.classList.contains('open')) {
+                closeModal();
+            }
+        });
+
+        // =======================================================
+        // منطق التصفية المتقدمة والبحث
+        // =======================================================
+        
+        function setupFilters() {
+            const categories = ['الكل', ...new Set(products.map(p => p.category))];
+            
+            categories.forEach(category => {
+                const button = document.createElement('button');
+                button.textContent = category;
+                button.className = `filter-button px-4 py-1 md:px-5 md:py-2 rounded-full text-xs md:text-sm hover:opacity-80 transition-all ${category === activeCategory ? 'active' : ''}`;
+                
+                button.addEventListener('click', () => {
+                    activeCategory = category;
+                    document.querySelectorAll('.filter-button').forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    filterAndSearchProducts();
+                });
+                
+                filterButtonsContainer.appendChild(button);
+            });
+        }
+        
+        function filterAndSearchProducts() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const productCards = Array.from(productGrid.children);
+            
+            productCards.forEach(cardContainer => {
+                const productId = parseInt(cardContainer.getAttribute('data-id'));
+                const product = products.find(p => p.id === productId);
+
+                const matchesFilter = (activeCategory === 'الكل' || product.category === activeCategory);
+                const matchesSearch = product.name.toLowerCase().includes(searchTerm) || 
+                                      product.description.toLowerCase().includes(searchTerm) || 
+                                      product.category.toLowerCase().includes(searchTerm);
+                
+                if (matchesFilter && matchesSearch) {
+                    cardContainer.classList.remove('hidden-product');
+                    // لضمان عمل الحركة الانتقالية (Transition)
+                    setTimeout(() => {
+                        cardContainer.style.maxHeight = 'none'; 
+                    }, 50);
+                } else {
+                    cardContainer.style.maxHeight = '0px'; 
+                    cardContainer.classList.add('hidden-product');
+                }
+            });
+        }
+
+
+        // =======================================================
+        // منطق عام للصفحة والتصفح
+        // =======================================================
+        
+        function renderProducts(productList) {
+            productGrid.innerHTML = '';
+            productList.forEach(createProductCard);
+            filterAndSearchProducts();
+        }
+
+        document.getElementById('searchInput').addEventListener('input', () => {
+             filterAndSearchProducts();
+        });
+        
+        // منطق شريط التمرير (Scroll to Top)
+        const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                scrollToTopBtn.style.opacity = '1';
+                scrollToTopBtn.style.transform = 'translateY(0)';
+            } else {
+                scrollToTopBtn.style.opacity = '0';
+                scrollToTopBtn.style.transform = 'translateY(40px)';
+            }
+        });
+
+        scrollToTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        
+        // تشغيل الدالة عند تحميل الصفحة
+        document.addEventListener('DOMContentLoaded', () => {
+            renderProducts(products); // عرض المنتجات
+            setupFilters();          // إعداد أزرار التصفية
+        });
+    </script>
+</body>
+</html>
+
